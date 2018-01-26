@@ -72,6 +72,7 @@ class BaseConnection(connection.Connection):
                              on_open_error_callback, on_close_callback)
 
     def __repr__(self):
+
         def get_socket_repr(sock):
             """Return socket info suitable for use in repr"""
             if sock is None:

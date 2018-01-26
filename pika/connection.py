@@ -522,7 +522,7 @@ class Parameters(object):  # pylint: disable=R0902
             a SSLOptions object for advanced setup.
 
         """
-        if not isinstance(value, (SSLOptions, type(None))):
+        if not isinstance(value, (dict, SSLOptions, type(None))):
             raise TypeError(
                 'ssl_options must be a dict, None or an SSLOptions but got %r'
                 % (value, ))
