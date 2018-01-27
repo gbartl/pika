@@ -16,6 +16,7 @@ import socket
 import pika
 import pika.tcp_socket_opts
 from pika.adapters import base_connection
+import ssl
 
 # If this is missing, set it manually. We need it to test tcp opt setting.
 try:
@@ -101,22 +102,81 @@ class BaseConnectionTests(unittest.TestCase):
                 wrap_socket_mock.assert_called_once_with(
                     sock_mock, do_handshake_on_connect=conn.DO_HANDSHAKE)
 
-    def test_ssl_wrap_socket_with_dict_ssl_options(self):
-
-        ssl_options = dict(ssl='options', handshake=False)
+    @mock.patch('ssl.SSLContext.load_cert_chain')
+    @mock.patch('ssl.SSLContext.load_verify_locations')
+    @mock.patch('ssl.SSLContext.set_ciphers')
+    @mock.patch('ssl.SSLContext.wrap_socket')
+    def test_ssl_wrap_socket_with_default_ssl_options_obj(self,
+                                                          wrap_socket_mock,
+                                                          set_ciphers_mock,
+                                                          load_verify_mock,
+                                                          load_certs_mock):
+        ssl_options = pika.SSLOptions()
         params = pika.ConnectionParameters(ssl_options=ssl_options)
-        self.assertEqual(params.ssl_options, ssl_options)
+        #self.assertEqual(params.ssl_options, ssl_options)
+
 
         with mock.patch('pika.connection.Connection.connect'):
             conn = base_connection.BaseConnection(parameters=params)
 
-            with mock.patch('pika.adapters.base_connection'
-                            '.ssl.wrap_socket') as wrap_socket_mock:
-                sock_mock = mock.Mock()
-                conn._wrap_socket(sock_mock)
+            sock_mock = mock.Mock()
+            conn._wrap_socket(sock_mock)
 
-                wrap_socket_mock.assert_called_once_with(
-                    sock_mock,
-                    do_handshake_on_connect=conn.DO_HANDSHAKE,
-                    ssl='options',
-                    handshake=False)
+            load_certs_mock.assert_not_called()
+            load_verify_mock.assert_not_called()
+            # the constructor of SSLContext calls set_ciphers,
+            # hence the 'called once'
+            set_ciphers_mock.assert_called_once()
+            wrap_socket_mock.assert_called_once_with(
+                sock_mock,
+                server_side=False,
+                do_handshake_on_connect=conn.DO_HANDSHAKE,
+                suppress_ragged_eofs=True,
+                server_hostname=None
+                )
+
+    @mock.patch('ssl.SSLContext.load_cert_chain')
+    @mock.patch('ssl.SSLContext.load_verify_locations')
+    @mock.patch('ssl.SSLContext.set_ciphers')
+    @mock.patch('ssl.SSLContext.wrap_socket')
+    def test_ssl_wrap_socket_with_ssl_options_obj(self,
+                                                        wrap_socket_mock,
+                                                        set_ciphers_mock,
+                                                        load_verify_mock,
+                                                        load_certs_mock):
+        ssl_options = pika.SSLOptions(certfile='/some/cert/file.crt',
+                                      keyfile='/some/key/file.crt',
+                                      key_password='pa55w0rd',
+                                      cafile='/some/ca/file.crt',
+                                      capath='/some/ca/path',
+                                      cadata='/some/data/or/something',
+                                      ciphers='ciphers',
+                                      server_hostname='some.virtual.host',
+                                      do_handshake_on_connect=False,
+                                      suppress_ragged_eofs=False,
+                                      server_side=True)
+        params = pika.ConnectionParameters(ssl_options=ssl_options)
+        #self.assertEqual(params.ssl_options, ssl_options)
+
+
+        with mock.patch('pika.connection.Connection.connect'):
+            conn = base_connection.BaseConnection(parameters=params)
+
+            sock_mock = mock.Mock()
+            conn._wrap_socket(sock_mock)
+
+            load_certs_mock.assert_called_once_with(certfile='/some/cert/file.crt',
+                                                    keyfile='/some/key/file.crt',
+                                                    password='pa55w0rd')
+            load_verify_mock.assert_called_once_with(cafile='/some/ca/file.crt',
+                                                     capath='/some/ca/path',
+                                                     cadata='/some/data/or/something')
+            # the constructor of SSLContext calls set_ciphers as well
+            set_ciphers_mock.assert_called_with('ciphers')
+            wrap_socket_mock.assert_called_once_with(
+                sock_mock,
+                server_side=True,
+                do_handshake_on_connect=False,
+                suppress_ragged_eofs=False,
+                server_hostname='some.virtual.host'
+                )
