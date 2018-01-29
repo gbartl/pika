@@ -102,6 +102,26 @@ class BaseConnectionTests(unittest.TestCase):
                 wrap_socket_mock.assert_called_once_with(
                     sock_mock, do_handshake_on_connect=conn.DO_HANDSHAKE)
 
+    def test_ssl_wrap_socket_with_dict_ssl_options(self):
+
+        ssl_options = dict(ssl='options', handshake=False)
+        params = pika.ConnectionParameters(ssl_options=ssl_options)
+        self.assertEqual(params.ssl_options, ssl_options)
+
+        with mock.patch('pika.connection.Connection.connect'):
+            conn = base_connection.BaseConnection(parameters=params)
+
+            with mock.patch('pika.adapters.base_connection'
+                            '.ssl.wrap_socket') as wrap_socket_mock:
+                sock_mock = mock.Mock()
+                conn._wrap_socket(sock_mock)
+
+                wrap_socket_mock.assert_called_once_with(
+                    sock_mock,
+                    do_handshake_on_connect=conn.DO_HANDSHAKE,
+                    ssl='options',
+                    handshake=False)
+
     @mock.patch('ssl.SSLContext.load_cert_chain')
     @mock.patch('ssl.SSLContext.load_verify_locations')
     @mock.patch('ssl.SSLContext.set_ciphers')
@@ -124,7 +144,7 @@ class BaseConnectionTests(unittest.TestCase):
 
             load_certs_mock.assert_not_called()
             load_verify_mock.assert_not_called()
-            # the constructor of SSLContext calls set_ciphers,
+            # the __init__ of SSLContext calls set_ciphers,
             # hence the 'called once'
             set_ciphers_mock.assert_called_once()
             wrap_socket_mock.assert_called_once_with(
