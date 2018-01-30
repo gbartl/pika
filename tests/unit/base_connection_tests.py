@@ -124,11 +124,11 @@ class BaseConnectionTests(unittest.TestCase):
                     ssl='options',
                     handshake=False)
 
-    @unittest.skipIf(sys.version_info == (2,6), 'Unavailable ssl features')
     @mock.patch('ssl.SSLContext.load_cert_chain')
     @mock.patch('ssl.SSLContext.load_verify_locations')
     @mock.patch('ssl.SSLContext.set_ciphers')
     @mock.patch('ssl.SSLContext.wrap_socket')
+    @unittest.skipIf(sys.version_info < (2,7,0), 'Unavailable ssl features')
     def test_ssl_wrap_socket_with_default_ssl_options_obj(self,
                                                           wrap_socket_mock,
                                                           set_ciphers_mock,
@@ -158,11 +158,12 @@ class BaseConnectionTests(unittest.TestCase):
                 server_hostname=None
                 )
 
-    @unittest.skipIf(sys.version_info == (2,6), 'Unavailable ssl features')
+
     @mock.patch('ssl.SSLContext.load_cert_chain')
     @mock.patch('ssl.SSLContext.load_verify_locations')
     @mock.patch('ssl.SSLContext.set_ciphers')
     @mock.patch('ssl.SSLContext.wrap_socket')
+    @unittest.skipIf(sys.version_info < (2,7,0), 'Unavailable ssl features')
     def test_ssl_wrap_socket_with_ssl_options_obj(self,
                                                         wrap_socket_mock,
                                                         set_ciphers_mock,
