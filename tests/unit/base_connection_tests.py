@@ -124,7 +124,7 @@ class BaseConnectionTests(unittest.TestCase):
                     ssl='options',
                     handshake=False)
 
-    @unittest.skipIf(sys.version_info == (2,6))
+    @unittest.skipIf(sys.version_info == (2,6), 'Unavailable ssl features')
     @mock.patch('ssl.SSLContext.load_cert_chain')
     @mock.patch('ssl.SSLContext.load_verify_locations')
     @mock.patch('ssl.SSLContext.set_ciphers')
@@ -158,7 +158,7 @@ class BaseConnectionTests(unittest.TestCase):
                 server_hostname=None
                 )
 
-    @unittest.skipIf(sys.version_info == (2,6))
+    @unittest.skipIf(sys.version_info == (2,6), 'Unavailable ssl features')
     @mock.patch('ssl.SSLContext.load_cert_chain')
     @mock.patch('ssl.SSLContext.load_verify_locations')
     @mock.patch('ssl.SSLContext.set_ciphers')
