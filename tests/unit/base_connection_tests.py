@@ -14,9 +14,11 @@ except ImportError:
 
 import socket
 import pika
+import ssl
+import sys
+
 import pika.tcp_socket_opts
 from pika.adapters import base_connection
-import ssl
 
 # If this is missing, set it manually. We need it to test tcp opt setting.
 try:

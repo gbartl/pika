@@ -7,7 +7,7 @@ import errno
 import logging
 import socket
 import ssl
-import sys
+
 
 import pika.compat
 import pika.tcp_socket_opts
